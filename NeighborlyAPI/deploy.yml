@@ -1,0 +1,195 @@
+data:
+  FUNCTIONS_WORKER_RUNTIME: cHl0aG9u
+apiVersion: v1
+kind: Secret
+metadata:
+  name: sangtt4fa
+---
+data:
+  host.master: T0xaWlRHTXp4OExTMWEyZ2o0WnJkQmZESXVXZ0x2cXlZczZPQUhUOFhvOWFBekZ1R1dLQmpBPT0=
+  host.function.default: eVlRemNXWEo1YzhHVDg0aHZIN0pqY1NQakhhWDFYalRkaTQ3QUxBX0ZsTW1BekZ1b0x4LW9nPT0=
+  host.systemKey.default: N0Rjb3JVRmJpeDlTQmxfVnlhRWlLV09fQmNCekxwLTBFZ3p5aG1hQXRYeWVBekZ1Zkc3WmVBPT0=
+  functions.deleteadvertisement.default: VUVGcnhWOXc1OUwtQXRLYWVVQ1AzNzBLZmY0RlFDZ0VtME1MdzBsMzNUVVpBekZ1S3dfLXZBPT0=
+  functions.getpost.default: X25abFlMZjZQeGwzRkNpTG9pSnpybVZXWWtqVUZrQTBxZmtmeDZCaWZkbkJBekZ1NE1URDlBPT0=
+  functions.getadvertisement.default: T09mbTBZcU52R0dwUWFQLW0ySEU0eXNhZGNJdFNZLUxQV0pKX29SRzhrcUNBekZ1SENwSXpnPT0=
+  functions.createadvertisement.default: Um9WblNwTndlR21iYTJKaW5yU0E3SVlkM0NsOVdVSWFkSDN0MVFuMkplSEdBekZ1TEI2QTFRPT0=
+  functions.getadvertisements.default: Q3YxRTFJMHpuU2VvWGVOeXlmOWM3a1NJUXdzTDFTcUNrVDRQTEdWVGlyM3RBekZ1bmRVT2RRPT0=
+  functions.updateadvertisement.default: SF9jQjhQQW9VeGF0R3pHTkprU0VGa29PR1hKSnpEOW1TTTdTNHJtZjN0Nm1BekZ1ZVkza1lnPT0=
+  functions.getposts.default: Rk9URkp1TTcxZjBWZjlBWVdiRGwwcG4wLW5kMy1mNFdPYnd0THpDR0duYkdBekZ1MWlpTGRRPT0=
+apiVersion: v1
+kind: Secret
+metadata:
+  name: func-keys-kube-secret-sangtt4fa
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: sangtt4fa-function-keys-identity-svc-act
+---
+rules:
+- apiGroups:
+  - ''
+  resources:
+  - secrets
+  - configMaps
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: functions-keys-manager-role
+---
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: functions-keys-manager-role
+subjects:
+- kind: ServiceAccount
+  name: sangtt4fa-function-keys-identity-svc-act
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: sangtt4fa-function-keys-identity-svc-act-functions-keys-manager-rolebinding
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sangtt4fa-http
+spec:
+  selector:
+    app: sangtt4fa-http
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+  type: LoadBalancer
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sangtt4fa-http
+  labels:
+    app: sangtt4fa-http
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sangtt4fa-http
+  template:
+    metadata:
+      labels:
+        app: sangtt4fa-http
+    spec:
+      containers:
+      - name: sangtt4fa-http
+        image: sangtt4cr.azurecr.io/sangtt4fa:latest
+        ports:
+        - containerPort: 80
+        env:
+        - name: AzureFunctionsJobHost__functions__0
+          value: deleteAdvertisement
+        - name: AzureFunctionsJobHost__functions__1
+          value: getPost
+        - name: AzureFunctionsJobHost__functions__2
+          value: getAdvertisement
+        - name: AzureFunctionsJobHost__functions__3
+          value: createAdvertisement
+        - name: AzureFunctionsJobHost__functions__4
+          value: getAdvertisements
+        - name: AzureFunctionsJobHost__functions__5
+          value: updateAdvertisement
+        - name: AzureFunctionsJobHost__functions__6
+          value: getPosts
+        - name: AzureWebJobsSecretStorageType
+          value: kubernetes
+        - name: AzureWebJobsKubernetesSecretName
+          value: secrets/func-keys-kube-secret-sangtt4fa
+        envFrom:
+        - secretRef:
+            name: sangtt4fa
+        readinessProbe:
+          failureThreshold: 3
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 240
+          httpGet:
+            path: /
+            port: 80
+            scheme: HTTP
+        startupProbe:
+          failureThreshold: 3
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 240
+          httpGet:
+            path: /
+            port: 80
+            scheme: HTTP
+      serviceAccountName: sangtt4fa-function-keys-identity-svc-act
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sangtt4fa
+  labels:
+    app: sangtt4fa
+spec:
+  selector:
+    matchLabels:
+      app: sangtt4fa
+  template:
+    metadata:
+      labels:
+        app: sangtt4fa
+    spec:
+      containers:
+      - name: sangtt4fa
+        image: sangtt4cr.azurecr.io/sangtt4fa:latest
+        env:
+        - name: AzureFunctionsJobHost__functions__0
+          value: eventHubTrigger
+        envFrom:
+        - secretRef:
+            name: sangtt4fa
+        readinessProbe:
+          failureThreshold: 3
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 240
+          httpGet:
+            path: /
+            port: 80
+            scheme: HTTP
+        startupProbe:
+          failureThreshold: 3
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 240
+          httpGet:
+            path: /
+            port: 80
+            scheme: HTTP
+      serviceAccountName: sangtt4fa-function-keys-identity-svc-act
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: sangtt4fa
+  labels: {}
+spec:
+  scaleTargetRef:
+    name: sangtt4fa
+  triggers:
+  - type: eventgridtrigger
+    metadata:
+      direction: in
+      eventHubName: testhub
+      connection: Endpoint=sb://udacityneighborly.servicebus.windows.net/;SharedAccessKeyName=allpolicy;SharedAccessKey=LOxUOkN13xN038T1VoSsmaTt4s7vq/+VCzduS5/nH9A=;EntityPath=testhub
+---
+
